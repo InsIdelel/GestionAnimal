@@ -3,32 +3,39 @@ import 'package:gestion_animal/models/flock.dart';
 import 'package:gestion_animal/models/sheep.dart';
 import 'package:gestion_animal/screens/sheep_form_screen.dart';
 import 'package:gestion_animal/services/sheep_service.dart';
+
 class SheepListScreen extends StatefulWidget {
   final Flock flock;
-  final List initialSheep;
+  final List<Sheep> initialSheep;
+
   const SheepListScreen({
     Key? key,
     required this.flock,
     required this.initialSheep,
   }) : super(key: key);
+
   @override
   SheepListScreenState createState() => SheepListScreenState();
 }
-class SheepListScreenState extends State {
-  late List _sheep;
+
+class SheepListScreenState extends State<SheepListScreen> {
+  late List<Sheep> _sheep;
   final SheepService _sheepService = SheepService();
   bool _isLoading = false;
   String? _error;
+
   @override
   void initState() {
     super.initState();
     _sheep = widget.initialSheep;
   }
-  Future _refreshSheep() async {
+
+  Future<void> _refreshSheep() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
+
     try {
       final sheepList = await _sheepService.getSheepByFlock(widget.flock.id!);
       setState(() {
@@ -42,6 +49,7 @@ class SheepListScreenState extends State {
       });
     }
   }
+
   void _navigateToSheepForm({Sheep? sheep}) async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
@@ -51,10 +59,12 @@ class SheepListScreenState extends State {
         ),
       ),
     );
+
     if (result == true) {
       _refreshSheep();
     }
   }
+
   void _confirmDeleteSheep(Sheep sheep) {
     showDialog(
       context: context,
@@ -69,23 +79,29 @@ class SheepListScreenState extends State {
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              setState(() => _isLoading = true);
+              setState(() {
+                _isLoading = true;
+              });
 
               try {
-                final success = await _sheepService.deleteSheep(sheep.idBoucle);
-                if (success) {
-                  _refreshSheep();
-                } else {
+                final success = await _sheepService.deleteSheep(sheep.id!);
+                if (mounted) {
+                  if (success) {
+                    _refreshSheep();
+                  } else {
+                    setState(() {
+                      _error = 'Erreur lors de la suppression du mouton';
+                      _isLoading = false;
+                    });
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
                   setState(() {
-                    _error = 'Échec de la suppression du mouton.';
+                    _error = e.toString();
                     _isLoading = false;
                   });
                 }
-              } catch (e) {
-                setState(() {
-                  _error = e.toString();
-                  _isLoading = false;
-                });
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -95,11 +111,13 @@ class SheepListScreenState extends State {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
+
     if (_error != null) {
       return Center(
         child: Column(
@@ -119,6 +137,7 @@ class SheepListScreenState extends State {
         ),
       );
     }
+
     if (_sheep.isEmpty) {
       return Center(
         child: Column(
@@ -137,6 +156,7 @@ class SheepListScreenState extends State {
         ),
       );
     }
+
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _refreshSheep,
@@ -151,9 +171,16 @@ class SheepListScreenState extends State {
                   'ID: ${sheep.idBoucle}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text('Race: ${sheep.race} | Sexe: ${sheep.sexe} | Âge: ${sheep.age} ans'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Race: ${sheep.race}'),
+                    Text('Âge: ${sheep.age} mois'),
+                    Text('Sexe: ${sheep.sexe}'),
+                  ],
+                ),
                 leading: CircleAvatar(
-                  backgroundColor: _getColorFromString(sheep.couleur),
+                  backgroundColor: Theme.of(context).primaryColor,
                   child: const Icon(Icons.pets, color: Colors.white),
                 ),
                 trailing: PopupMenuButton(
@@ -187,7 +214,6 @@ class SheepListScreenState extends State {
                     }
                   },
                 ),
-                onTap: () => _navigateToSheepForm(sheep: sheep),
               ),
             );
           },
@@ -200,19 +226,5 @@ class SheepListScreenState extends State {
       ),
     );
   }
-  Color _getColorFromString(String colorName) {
-    switch (colorName.toLowerCase()) {
-      case 'blanc':
-        return Colors.white;
-      case 'noir':
-        return Colors.black;
-      case 'marron':
-      case 'brun':
-        return Colors.brown;
-      case 'gris':
-        return Colors.grey;
-      default:
-        return Colors.blue;
-    }
-  }
 }
+
