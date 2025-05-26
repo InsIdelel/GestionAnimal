@@ -2,19 +2,22 @@ class Flock {
   final int? id;
   final String nom;
   final int userId;
+  
   Flock({
     this.id,
     required this.nom,
     required this.userId,
   });
-  factory Flock.fromJson(Map json) {
+  
+  factory Flock.fromJson(Map<String, dynamic> json) {
     return Flock(
       id: json['id'],
       nom: json['nom'],
       userId: json['user_id'],
     );
   }
-  Map toJson() {
+  
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'nom': nom,
@@ -22,3 +25,4 @@ class Flock {
     };
   }
 }
+

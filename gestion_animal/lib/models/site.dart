@@ -5,6 +5,7 @@ class Site {
   final double latitude;
   final double longitude;
   final int flockId;
+  
   Site({
     this.id,
     required this.status,
@@ -13,17 +14,19 @@ class Site {
     required this.longitude,
     required this.flockId,
   });
-  factory Site.fromJson(Map json) {
+  
+  factory Site.fromJson(Map<String, dynamic> json) {
     return Site(
       id: json['id'],
       status: json['status'],
       notes: json['notes'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      latitude: json['latitude'] is int ? (json['latitude'] as int).toDouble() : json['latitude'],
+      longitude: json['longitude'] is int ? (json['longitude'] as int).toDouble() : json['longitude'],
       flockId: json['flock_id'],
     );
   }
-  Map toJson() {
+  
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'status': status,
@@ -34,3 +37,4 @@ class Site {
     };
   }
 }
+

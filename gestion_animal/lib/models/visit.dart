@@ -3,13 +3,15 @@ class Visit {
   final DateTime date;
   final String? notes;
   final int siteId;
+  
   Visit({
     this.id,
     required this.date,
     this.notes,
     required this.siteId,
   });
-  factory Visit.fromJson(Map json) {
+  
+  factory Visit.fromJson(Map<String, dynamic> json) {
     return Visit(
       id: json['id'],
       date: DateTime.parse(json['date']),
@@ -17,7 +19,8 @@ class Visit {
       siteId: json['site_id'],
     );
   }
-  Map toJson() {
+  
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'date': date.toIso8601String().split('T').first,
@@ -26,3 +29,4 @@ class Visit {
     };
   }
 }
+
