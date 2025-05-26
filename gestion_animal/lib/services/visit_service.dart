@@ -2,7 +2,9 @@ import 'package:gestion_animal/models/visit.dart';
 import 'package:gestion_animal/services/api_service.dart';
 class VisitService {
   final ApiService _apiService;
+
   VisitService({ApiService? apiService}) : _apiService = apiService ?? ApiService();
+
   Future getVisitsBySite(int siteId) async {
     try {
       final response = await _apiService.get('/visits/?site_id=$siteId');
@@ -12,6 +14,7 @@ class VisitService {
       return [];
     }
   }
+
   Future getVisit(int id) async {
     try {
       final response = await _apiService.get('/visits/$id');
@@ -21,30 +24,27 @@ class VisitService {
       return null;
     }
   }
+
   Future createVisit(Visit visit) async {
     try {
-      final response = await _apiService.post(
-        '/visits/',
-        visit.toJson(),
-      );
-      return Visit.fromJson(response);
+      await _apiService.post('/visits/', visit.toJson());
+      return true;
     } catch (e) {
       print('Create visit error: $e');
-      return null;
+      return false;
     }
   }
+
   Future updateVisit(Visit visit) async {
     try {
-      final response = await _apiService.put(
-        '/visits/${visit.id}',
-        visit.toJson(),
-      );
-      return Visit.fromJson(response);
+      await _apiService.put('/visits/${visit.id}', visit.toJson());
+      return true;
     } catch (e) {
       print('Update visit error: $e');
-      return null;
+      return false;
     }
   }
+
   Future deleteVisit(int id) async {
     try {
       await _apiService.delete('/visits/$id');

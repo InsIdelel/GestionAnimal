@@ -23,12 +23,13 @@ class VisitFormScreenState extends State {
   bool _isLoading = false;
   String? _error;
   bool _isEditing = false;
+  final VisitService _visitService = VisitService();
+  final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
   @override
   void initState() {
     super.initState();
-    _isEditing = widget.visit != null;
-
-    if (_isEditing) {
+    if (widget.visit != null) {
+      _isEditing = true;
       _selectedDate = widget.visit!.date;
       _notesController.text = widget.visit!.notes ?? '';
     }
@@ -43,7 +44,7 @@ class VisitFormScreenState extends State {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
+      lastDate: DateTime(2100),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -58,34 +59,35 @@ class VisitFormScreenState extends State {
         _error = null;
       });
       try {
-        final visitService = VisitService();
         final visit = Visit(
           id: _isEditing ? widget.visit!.id : null,
           date: _selectedDate,
-          notes: _notesController.text.isEmpty ? null : _notesController.text.trim(),
+          notes: _notesController.text.trim(),
           siteId: widget.site.id!,
         );
         bool success;
         if (_isEditing) {
-          final updatedVisit = await visitService.updateVisit(visit);
-          success = updatedVisit != null;
+          success = await _visitService.updateVisit(visit);
         } else {
-          final newVisit = await visitService.createVisit(visit);
-          success = newVisit != null;
+          success = await _visitService.createVisit(visit);
         }
-        if (success && mounted) {
-          Navigator.of(context).pop(true);
-        } else {
+        if (mounted) {
+          if (success) {
+            Navigator.of(context).pop(true);
+          } else {
+            setState(() {
+              _error = 'Erreur lors de l\'enregistrement de la visite';
+              _isLoading = false;
+            });
+          }
+        }
+      } catch (e) {
+        if (mounted) {
           setState(() {
-            _error = 'Échec de l\'enregistrement de la visite.';
+            _error = e.toString();
             _isLoading = false;
           });
         }
-      } catch (e) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
       }
     }
   }
@@ -95,77 +97,56 @@ class VisitFormScreenState extends State {
       appBar: AppBar(
         title: Text(_isEditing ? 'Modifier la visite' : 'Ajouter une visite'),
       ),
-      body: Padding(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Date de la visite',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                DateFormat('dd/MM/yyyy').format(_selectedDate),
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => _selectDate(context),
-                              child: const Text('Choisir une date'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _notesController,
+              InkWell(
+                onTap: () => _selectDate(context),
+                child: InputDecorator(
                   decoration: const InputDecoration(
-                    labelText: 'Notes (optionnel)',
+                    labelText: 'Date de visite',
                     border: OutlineInputBorder(),
-                    helperText: 'Observations, actions réalisées, etc.',
+                    suffixIcon: Icon(Icons.calendar_today),
                   ),
-                  maxLines: 5,
+                  child: Text(_dateFormat.format(_selectedDate)),
                 ),
-                const SizedBox(height: 24),
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _saveVisit,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : Text(_isEditing ? 'Enregistrer' : 'Ajouter'),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes',
+                  border: OutlineInputBorder(),
                 ),
-              ],
-            ),
+                maxLines: 5,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _saveVisit,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: Text(
+                  _isEditing ? 'Enregistrer les modifications' : 'Ajouter la visite',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
           ),
         ),
       ),

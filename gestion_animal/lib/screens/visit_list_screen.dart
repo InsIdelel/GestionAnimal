@@ -56,7 +56,7 @@ class VisitListScreenState extends State {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Supprimer la visite'),
-        content: Text('Êtes-vous sûr de vouloir supprimer cette visite du ${DateFormat('dd/MM/yyyy').format(visit.date)} ?'),
+        content: Text('Êtes-vous sûr de vouloir supprimer cette visite ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -65,23 +65,28 @@ class VisitListScreenState extends State {
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              setState(() => _isLoading = true);
-
+              setState(() {
+                _isLoading = true;
+              });
               try {
                 final success = await _visitService.deleteVisit(visit.id!);
-                if (success) {
-                  _loadVisits();
-                } else {
+                if (mounted) {
+                  if (success) {
+                    _loadVisits();
+                  } else {
+                    setState(() {
+                      _error = 'Erreur lors de la suppression de la visite';
+                      _isLoading = false;
+                    });
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
                   setState(() {
-                    _error = 'Échec de la suppression de la visite.';
+                    _error = e.toString();
                     _isLoading = false;
                   });
                 }
-              } catch (e) {
-                setState(() {
-                  _error = e.toString();
-                  _isLoading = false;
-                });
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -93,9 +98,10 @@ class VisitListScreenState extends State {
   }
   @override
   Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd/MM/yyyy');
     return Scaffold(
       appBar: AppBar(
-        title: Text('Visites du site #${widget.site.id}'),
+        title: const Text('Visites du site'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -123,7 +129,7 @@ class VisitListScreenState extends State {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Aucune visite trouvée',
+              'Aucune visite enregistrée',
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 16),
@@ -144,14 +150,15 @@ class VisitListScreenState extends State {
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
                 title: Text(
-                  'Visite du ${DateFormat('dd/MM/yyyy').format(visit.date)}',
+                  'Visite du ${dateFormat.format(visit.date)}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: visit.notes != null && visit.notes!.isNotEmpty
                     ? Text('Notes: ${visit.notes}')
-                    : null,
-                leading: const CircleAvatar(
-                  child: Icon(Icons.calendar_today),
+                    : const Text('Aucune note'),
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  child: const Icon(Icons.calendar_today, color: Colors.white),
                 ),
                 trailing: PopupMenuButton(
                   itemBuilder: (context) => [
@@ -184,7 +191,6 @@ class VisitListScreenState extends State {
                     }
                   },
                 ),
-                onTap: () => _navigateToVisitForm(visit: visit),
               ),
             );
           },

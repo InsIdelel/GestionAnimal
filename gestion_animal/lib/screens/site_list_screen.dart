@@ -57,14 +57,14 @@ class SiteListScreenState extends State {
       _refreshSites();
     }
   }
-  void _navigateToVisits(Site site) {
+  void _navigateToVisitList(Site site) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => VisitListScreen(site: site),
       ),
     );
   }
-  void _navigateToMap() {
+  void _navigateToSiteMap() {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => SiteMapScreen(sites: _sites),
@@ -85,23 +85,28 @@ class SiteListScreenState extends State {
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              setState(() => _isLoading = true);
-
+              setState(() {
+                _isLoading = true;
+              });
               try {
                 final success = await _siteService.deleteSite(site.id!);
-                if (success) {
-                  _refreshSites();
-                } else {
+                if (mounted) {
+                  if (success) {
+                    _refreshSites();
+                  } else {
+                    setState(() {
+                      _error = 'Erreur lors de la suppression du site';
+                      _isLoading = false;
+                    });
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
                   setState(() {
-                    _error = 'Échec de la suppression du site.';
+                    _error = e.toString();
                     _isLoading = false;
                   });
                 }
-              } catch (e) {
-                setState(() {
-                  _error = e.toString();
-                  _isLoading = false;
-                });
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -110,6 +115,30 @@ class SiteListScreenState extends State {
         ],
       ),
     );
+  }
+  String _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'vide':
+        return 'Gris';
+      case 'occupé':
+        return 'Vert';
+      case 'maintenance':
+        return 'Orange';
+      default:
+        return 'Inconnu';
+    }
+  }
+  Color _getStatusColorValue(String status) {
+    switch (status.toLowerCase()) {
+      case 'vide':
+        return Colors.grey;
+      case 'occupé':
+        return Colors.green;
+      case 'maintenance':
+        return Colors.orange;
+      default:
+        return Colors.blue;
+    }
   }
   @override
   Widget build(BuildContext context) {
@@ -142,11 +171,11 @@ class SiteListScreenState extends State {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton.icon(
-                onPressed: _navigateToMap,
+                onPressed: _navigateToSiteMap,
                 icon: const Icon(Icons.map),
-                label: const Text('Voir la carte des sites'),
+                label: const Text('Voir la carte'),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
+                  minimumSize: const Size.fromHeight(50),
                 ),
               ),
             ),
@@ -178,22 +207,21 @@ class SiteListScreenState extends State {
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: ListTile(
                       title: Text(
-                        'Site #${site.id}',
+                        'Site #${index + 1}',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Statut: ${site.status}'),
-                          Text('Coordonnées: ${site.latitude.toStringAsFixed(4)}, ${site.longitude.toStringAsFixed(4)}'),
+                          Text('Latitude: ${site.latitude}'),
+                          Text('Longitude: ${site.longitude}'),
+                          Text('Statut: ${site.status} (${_getStatusColor(site.status)})'),
                           if (site.notes != null && site.notes!.isNotEmpty)
                             Text('Notes: ${site.notes}'),
                         ],
                       ),
                       leading: CircleAvatar(
-                        backgroundColor: site.status.toLowerCase() == 'complet'
-                            ? Colors.green
-                            : Colors.orange,
+                        backgroundColor: _getStatusColorValue(site.status),
                         child: const Icon(Icons.location_on, color: Colors.white),
                       ),
                       trailing: PopupMenuButton(
@@ -202,7 +230,7 @@ class SiteListScreenState extends State {
                             value: 'visits',
                             child: Row(
                               children: [
-                                Icon(Icons.calendar_today, size: 18),
+                                Icon(Icons.visibility, size: 18),
                                 SizedBox(width: 8),
                                 Text('Visites'),
                               ],
@@ -231,7 +259,7 @@ class SiteListScreenState extends State {
                         ],
                         onSelected: (value) {
                           if (value == 'visits') {
-                            _navigateToVisits(site);
+                            _navigateToVisitList(site);
                           } else if (value == 'edit') {
                             _navigateToSiteForm(site: site);
                           } else if (value == 'delete') {
@@ -239,7 +267,7 @@ class SiteListScreenState extends State {
                           }
                         },
                       ),
-                      onTap: () => _navigateToSiteForm(site: site),
+                      onTap: () => _navigateToVisitList(site),
                     ),
                   );
                 },

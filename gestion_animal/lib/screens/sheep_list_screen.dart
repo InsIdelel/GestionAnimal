@@ -69,23 +69,28 @@ class SheepListScreenState extends State {
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              setState(() => _isLoading = true);
-
+              setState(() {
+                _isLoading = true;
+              });
               try {
-                final success = await _sheepService.deleteSheep(sheep.idBoucle);
-                if (success) {
-                  _refreshSheep();
-                } else {
+                final success = await _sheepService.deleteSheep(sheep.id!);
+                if (mounted) {
+                  if (success) {
+                    _refreshSheep();
+                  } else {
+                    setState(() {
+                      _error = 'Erreur lors de la suppression du mouton';
+                      _isLoading = false;
+                    });
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
                   setState(() {
-                    _error = 'Échec de la suppression du mouton.';
+                    _error = e.toString();
                     _isLoading = false;
                   });
                 }
-              } catch (e) {
-                setState(() {
-                  _error = e.toString();
-                  _isLoading = false;
-                });
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -151,9 +156,16 @@ class SheepListScreenState extends State {
                   'ID: ${sheep.idBoucle}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text('Race: ${sheep.race} | Sexe: ${sheep.sexe} | Âge: ${sheep.age} ans'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Race: ${sheep.race}'),
+                    Text('Âge: ${sheep.age} mois'),
+                    Text('Sexe: ${sheep.sexe}'),
+                  ],
+                ),
                 leading: CircleAvatar(
-                  backgroundColor: _getColorFromString(sheep.couleur),
+                  backgroundColor: Theme.of(context).primaryColor,
                   child: const Icon(Icons.pets, color: Colors.white),
                 ),
                 trailing: PopupMenuButton(
@@ -187,7 +199,6 @@ class SheepListScreenState extends State {
                     }
                   },
                 ),
-                onTap: () => _navigateToSheepForm(sheep: sheep),
               ),
             );
           },
@@ -199,20 +210,5 @@ class SheepListScreenState extends State {
         child: const Icon(Icons.add),
       ),
     );
-  }
-  Color _getColorFromString(String colorName) {
-    switch (colorName.toLowerCase()) {
-      case 'blanc':
-        return Colors.white;
-      case 'noir':
-        return Colors.black;
-      case 'marron':
-      case 'brun':
-        return Colors.brown;
-      case 'gris':
-        return Colors.grey;
-      default:
-        return Colors.blue;
-    }
   }
 }

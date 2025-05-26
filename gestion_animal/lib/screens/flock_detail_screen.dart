@@ -8,7 +8,9 @@ import 'package:gestion_animal/services/sheep_service.dart';
 import 'package:gestion_animal/services/site_service.dart';
 class FlockDetailScreen extends StatefulWidget {
   final Flock flock;
+
   const FlockDetailScreen({Key? key, required this.flock}) : super(key: key);
+
   @override
   FlockDetailScreenState createState() => FlockDetailScreenState();
 }
