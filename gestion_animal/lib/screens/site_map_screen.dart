@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:gestion_animal/models/site.dart';
+
 class SiteMapScreen extends StatefulWidget {
-  final List sites;
+  final List<Site> sites;
   const SiteMapScreen({Key? key, required this.sites}) : super(key: key);
+
   @override
   SiteMapScreenState createState() => SiteMapScreenState();
 }
-class SiteMapScreenState extends State {
+
+class SiteMapScreenState extends State<SiteMapScreen> {
   late MapController _mapController;
 
   @override
@@ -16,6 +19,7 @@ class SiteMapScreenState extends State {
     super.initState();
     _mapController = MapController();
   }
+
   @override
   Widget build(BuildContext context) {
     // Calculer le centre de la carte en fonction des sites
@@ -33,6 +37,7 @@ class SiteMapScreenState extends State {
       }
       center = LatLng(sumLat / widget.sites.length, sumLng / widget.sites.length);
     }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Carte des sites'),
@@ -46,7 +51,7 @@ class SiteMapScreenState extends State {
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.example.flutter_anim_app',
+            userAgentPackageName: 'com.example.gestion_animal',
           ),
           MarkerLayer(
             markers: widget.sites.map((site) {
@@ -54,53 +59,69 @@ class SiteMapScreenState extends State {
                 width: 80.0,
                 height: 80.0,
                 point: LatLng(site.latitude, site.longitude),
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: site.status.toLowerCase() == 'complet' ? Colors.green : Colors.orange,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                        size: 30.0,
-                      ),
+                builder: (ctx) => GestureDetector(
+                  onTap: () {
+                    _showSiteInfo(site);
+                  },
+                  child: Container(
+                    child: Icon(
+                      Icons.location_on,
+                      color: _getStatusColor(site.status),
+                      size: 40.0,
                     ),
-                    Text(
-                      'Site #${site.id}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.0,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               );
             }).toList(),
           ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'zoomIn',
-            onPressed: () {
-              _mapController.move(_mapController.center, _mapController.zoom + 1);
-            },
-            child: const Icon(Icons.add),
-          ),
-          const SizedBox(height: 16),
-          FloatingActionButton(
-            heroTag: 'zoomOut',
-            onPressed: () {
-              _mapController.move(_mapController.center, _mapController.zoom - 1);
-            },
-            child: const Icon(Icons.remove),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _mapController.move(center, 10.0);
+        },
+        child: const Icon(Icons.center_focus_strong),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'vide':
+        return Colors.grey;
+      case 'occupé':
+        return Colors.green;
+      case 'maintenance':
+        return Colors.orange;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  void _showSiteInfo(Site site) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Informations du site'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Latitude: ${site.latitude}'),
+            Text('Longitude: ${site.longitude}'),
+            Text('Statut: ${site.status}'),
+            if (site.notes != null && site.notes!.isNotEmpty)
+              Text('Notes: ${site.notes}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fermer'),
           ),
         ],
       ),
     );
   }
 }
+

@@ -3,25 +3,31 @@ import 'package:provider/provider.dart';
 import 'package:gestion_animal/models/flock.dart';
 import 'package:gestion_animal/providers/flock_provider.dart';
 import 'package:gestion_animal/screens/flock_detail_screen.dart';
+
 class FlockListScreen extends StatefulWidget {
   const FlockListScreen({Key? key}) : super(key: key);
+
   @override
   FlockListScreenState createState() => FlockListScreenState();
 }
-class FlockListScreenState extends State {
-  final _formKey = GlobalKey();
+
+class FlockListScreenState extends State<FlockListScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _flockNameController = TextEditingController();
   bool _isAddingFlock = false;
+
   @override
   void dispose() {
     _flockNameController.dispose();
     super.dispose();
   }
+
   void _showAddFlockDialog() {
     setState(() {
       _isAddingFlock = true;
       _flockNameController.clear();
     });
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -52,40 +58,40 @@ class FlockListScreenState extends State {
             },
             child: const Text('Annuler'),
           ),
-          Consumer(
+          Consumer<FlockProvider>(
             builder: (context, flockProvider, child) {
               return ElevatedButton(
                 onPressed: flockProvider.isLoading
                     ? null
                     : () async {
-                  if (_formKey.currentState!.validate()) {
-                    final success = await flockProvider.createFlock(
-                      _flockNameController.text.trim(),
-                    );
-                    if (mounted) {
-                      Navigator.of(context).pop();
-                      setState(() {
-                        _isAddingFlock = false;
-                      });
-                      if (!success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Erreur lors de la création du troupeau'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  }
-                },
+                        if (_formKey.currentState!.validate()) {
+                          final success = await flockProvider.createFlock(
+                            _flockNameController.text.trim(),
+                          );
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                            setState(() {
+                              _isAddingFlock = false;
+                            });
+                            if (!success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Erreur lors de la création du troupeau'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
                 child: flockProvider.isLoading
                     ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text('Ajouter'),
               );
             },
@@ -94,8 +100,10 @@ class FlockListScreenState extends State {
       ),
     );
   }
+
   void _showEditFlockDialog(Flock flock) {
     _flockNameController.text = flock.nom;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -123,38 +131,38 @@ class FlockListScreenState extends State {
             },
             child: const Text('Annuler'),
           ),
-          Consumer(
+          Consumer<FlockProvider>(
             builder: (context, flockProvider, child) {
               return ElevatedButton(
                 onPressed: flockProvider.isLoading
                     ? null
                     : () async {
-                  if (_formKey.currentState!.validate()) {
-                    final success = await flockProvider.updateFlock(
-                      flock.id!,
-                      _flockNameController.text.trim(),
-                    );
-                    if (mounted) {
-                      Navigator.of(context).pop();
-                      if (!success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Erreur lors de la modification du troupeau'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  }
-                },
+                        if (_formKey.currentState!.validate()) {
+                          final success = await flockProvider.updateFlock(
+                            flock.id!,
+                            _flockNameController.text.trim(),
+                          );
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                            if (!success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Erreur lors de la modification du troupeau'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
                 child: flockProvider.isLoading
                     ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text('Enregistrer'),
               );
             },
@@ -163,6 +171,7 @@ class FlockListScreenState extends State {
       ),
     );
   }
+
   void _confirmDeleteFlock(Flock flock) {
     showDialog(
       context: context,
@@ -174,34 +183,34 @@ class FlockListScreenState extends State {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Annuler'),
           ),
-          Consumer(
+          Consumer<FlockProvider>(
             builder: (context, flockProvider, child) {
               return ElevatedButton(
                 onPressed: flockProvider.isLoading
                     ? null
                     : () async {
-                  final success = await flockProvider.deleteFlock(flock.id!);
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                    if (!success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Erreur lors de la suppression du troupeau'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
+                        final success = await flockProvider.deleteFlock(flock.id!);
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                          if (!success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Erreur lors de la suppression du troupeau'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: flockProvider.isLoading
                     ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text('Supprimer'),
               );
             },
@@ -210,6 +219,7 @@ class FlockListScreenState extends State {
       ),
     );
   }
+
   void _navigateToFlockDetail(Flock flock) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -217,14 +227,16 @@ class FlockListScreenState extends State {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Consumer(
+      body: Consumer<FlockProvider>(
         builder: (context, flockProvider, child) {
           if (flockProvider.isLoading && !_isAddingFlock) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (flockProvider.error != null) {
             return Center(
               child: Column(
@@ -244,6 +256,7 @@ class FlockListScreenState extends State {
               ),
             );
           }
+
           if (flockProvider.flocks.isEmpty) {
             return Center(
               child: Column(
@@ -262,6 +275,7 @@ class FlockListScreenState extends State {
               ),
             );
           }
+
           return RefreshIndicator(
             onRefresh: () => flockProvider.loadFlocks(),
             child: ListView.builder(
@@ -326,3 +340,4 @@ class FlockListScreenState extends State {
     );
   }
 }
+
