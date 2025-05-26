@@ -1,9 +1,12 @@
 import 'package:gestion_animal/models/visit.dart';
 import 'package:gestion_animal/services/api_service.dart';
+
 class VisitService {
   final ApiService _apiService;
+  
   VisitService({ApiService? apiService}) : _apiService = apiService ?? ApiService();
-  Future getVisitsBySite(int siteId) async {
+  
+  Future<List<Visit>> getVisitsBySite(int siteId) async {
     try {
       final response = await _apiService.get('/visits/?site_id=$siteId');
       return (response as List).map((data) => Visit.fromJson(data)).toList();
@@ -12,7 +15,8 @@ class VisitService {
       return [];
     }
   }
-  Future getVisit(int id) async {
+  
+  Future<Visit?> getVisit(int id) async {
     try {
       final response = await _apiService.get('/visits/$id');
       return Visit.fromJson(response);
@@ -21,31 +25,28 @@ class VisitService {
       return null;
     }
   }
-  Future createVisit(Visit visit) async {
+  
+  Future<bool> createVisit(Visit visit) async {
     try {
-      final response = await _apiService.post(
-        '/visits/',
-        visit.toJson(),
-      );
-      return Visit.fromJson(response);
+      await _apiService.post('/visits/', visit.toJson());
+      return true;
     } catch (e) {
       print('Create visit error: $e');
-      return null;
+      return false;
     }
   }
-  Future updateVisit(Visit visit) async {
+  
+  Future<bool> updateVisit(Visit visit) async {
     try {
-      final response = await _apiService.put(
-        '/visits/${visit.id}',
-        visit.toJson(),
-      );
-      return Visit.fromJson(response);
+      await _apiService.put('/visits/${visit.id}', visit.toJson());
+      return true;
     } catch (e) {
       print('Update visit error: $e');
-      return null;
+      return false;
     }
   }
-  Future deleteVisit(int id) async {
+  
+  Future<bool> deleteVisit(int id) async {
     try {
       await _apiService.delete('/visits/$id');
       return true;
@@ -55,3 +56,4 @@ class VisitService {
     }
   }
 }
+
